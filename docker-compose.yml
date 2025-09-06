@@ -4,6 +4,8 @@ services:
     container_name: coffeeapp_backend
     stdin_open: true
     tty: true
+    volumes:
+      - uploads_data:/app/static/uploads
     ports:
       - "5000:5000"
     env_file:
@@ -22,3 +24,4 @@ services:
       - db_data:/var/lib/mysql
 volumes:
   db_data:
+  uploads_data:

@@ -5,3 +5,9 @@ __pycache__/
 .env
 .git
 .gitignore
+
+# Ignore everything inside uploads
+app/static/uploads/*
+
+# But keep the folder itself
+!app/static/uploads/.gitkeep
