@@ -17,5 +17,21 @@ class Product(db.Model):
     description = db.Column(db.String(500), nullable=False)
     image = db.Column(db.String(500), nullable=False)
     price = db.Column(db.Float, nullable=False)
+    volume = db.Column(db.Integer, nullable=False)
+    rating = db.Column(db.Float, nullable=False)
+    total_reviews = db.Column(db.Integer, nullable=False)
     category_id = db.Column(db.Integer, db.ForeignKey('category.id'), nullable=False)
     category = db.relationship("Category", back_populates="products")
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "name": self.name,
+            "description": self.description,
+            "image": f'/uploads/{self.image}' if self.image else None,
+            "price": self.price,
+            "volume": self.volume,
+            "rating": self.rating,
+            "total_reviews": self.total_reviews,
+            "category_id": self.category_id,
+        }

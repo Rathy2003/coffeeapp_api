@@ -1,3 +1,4 @@
 .venv
-static
+app/static
 __pycache__
+.env
