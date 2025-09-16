@@ -1,0 +1,164 @@
+{% extends "base.html" %}
+{% import "components/macro.html" as ui %}
+{% set active_page = "product_create" %}
+
+{% block content %}
+<h3 class="text-center my-5 text-2xl font-bold text-gray-800">NEW PRODUCT</h3>
+
+<div id="app">
+    <!-- Start Feedback Message -->
+    {# Start Success Message #}
+    {% with messages = get_flashed_messages(category_filter=["success"]) %}
+        {% if messages %}
+            {% for x in messages %}
+                {{ ui.feedback_message(message=x,type="success")  }}
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+    {# End Success Message #}
+
+    {# Start Error Message #}
+    {% with errors = get_flashed_messages(category_filter=["error"]) %}
+        {% if errors %}
+            {% for x in errors %}
+                {{ ui.feedback_message(message=x,type="error")  }}
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+    {# End Error Message #}
+
+    <!-- End Feedback Message -->
+    <form @submit.prevent="submitForm" action="" method="POST">
+        <div class="flex gap-5">
+            <div class="w-1/2">
+                {{ ui.input_field(name="username",error="[[errors.name]]",model="form_data.name",type="text",label="Product Name",required=true,placeholder="Enter Product Name") }}
+                {{ ui.input_field(name="price",model="form_data.price",type="number",label="Product Price",required=true,placeholder="Enter Product Price") }}
+                {{ ui.select_field(name="category_id",placeholder="Select Product Category",model="form_data.category_id",label="Product Category",items=categories) }}
+                <div class="mb-3">
+                    <label for="productDescription" class="block mb-2">Product Description</label>
+                    <textarea v-model="form_data.description" name="description"
+                        placeholder="Enter Product Description (Optional)" id="productDescription"
+                        class="border border-gray-500 p-3 rounded w-full h-[158px]" required></textarea>
+                </div>
+            </div>
+
+            <div class="w-1/2">
+                <!-- Start Upload Images -->
+                <div class="mb-3">
+                    <p>Product Images ([[ image_file_list.length ]]/5 Images)</p>
+                    <div class="flex gap-3 mt-2">
+                        <div v-for="(file,index) in image_file_list" :key="'image'+index"
+                            class="group relative w-[84px] aspect-square bg-[#dcdcdc] rounded bg-cover bg-center"
+                            :style="'background-image: url('+ generateImageFileURL(file) +');'">
+                            <div
+                                class="hidden group-hover:flex w-full h-full absolute top-1/2 bg-black/20 left-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center justify-center">
+                                <button @click="onRemoveImage(file)" type="button" class="text-white cursor-pointer">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                        stroke-width="1.5" stroke="currentColor" class="size-8">
+                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                            d="m9.75 9.75 4.5 4.5m0-4.5-4.5 4.5M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Start Upload Image -->
+                        <div v-if="image_file_list.length < 5"
+                            class="w-[84px] aspect-square bg-[#dcdcdc] rounded bg-cover bg-center hover:bg-[#8a8a8a]/40 duration-250">
+                            <label for="productImage"
+                                class="block flex items-center justify-center cursor-pointer w-full h-full">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                    stroke-width="1.5" stroke="currentColor" class="size-6 text-[#8a8a8a]">
+                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                        d="M12 9v6m3-3H9m12 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                                </svg>
+                            </label>
+                            <input @change="onUploadImage" type="file" accept=".png, .jpg, .jpeg" name="image" id="productImage" class="hidden"
+                                required>
+                        </div>
+                        <!-- End Upload Image -->
+                    </div>
+                </div>
+                <!-- End Upload Images -->
+
+                {{ ui.input_field(name="Volume",model="form_data.volume",type="number",label="Product Volume",required=true,placeholder="Enter Product Volume") }}
+                {{ ui.input_field(name="rating",model="form_data.rating",type="number",label="Product Rating",required=true,placeholder="Enter Product Rating") }}
+                {{ ui.input_field(name="total_reviews",model="form_data.total_reviews",type="number",label="Total Reviews",required=true,placeholder="Enter Total Reviews") }}
+
+                <hr>
+                <div class="mt-5 flex items-center justify-end gap-3">
+                    {{ ui.button(text="CANCEL",url=url_for('admin_page.admin_product_page'),background="secondary") }}
+                    {{ ui.button(text="CREATE PRODUCT",type="submit") }}
+                </div>    
+            </div>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block script %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.11.0/axios.min.js" integrity="sha512-h9644v03pHqrIHThkvXhB2PJ8zf5E9IyVnrSfZg8Yj8k4RsO4zldcQc4Bi9iVLUCCsqNY0b4WXVV4UB+wbWENA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+<script>
+    const { createApp } = Vue
+    createApp({
+        delimiters: ['[[', ']]'],
+        data() {
+            return {
+                form_data: {
+                    name: '',
+                    description: '',
+                    price: 0.0,
+                    volume: 0,
+                    rating: 0.0,
+                    total_reviews: 0,
+                    category_id: ""
+                },
+                errors:{
+                    name:"",
+                },
+                image_file_list: []
+            }
+        },
+        methods: {
+            onUploadImage(event) {
+                this.image_file_list.push(event.target.files[0]);
+            },
+            generateImageFileURL(file) {
+                return URL.createObjectURL(file)
+            },
+            onRemoveImage(item) {
+                this.image_file_list.splice(this.image_file_list.indexOf(item), 1)
+            },
+            submitForm() {
+                const form = new FormData();
+                form.append('name', this.form_data.name)
+                form.append('description', this.form_data.description)
+                form.append('price', this.form_data.price)
+                form.append('volume', this.form_data.volume)
+                form.append('rating', this.form_data.rating)
+                form.append('total_reviews', this.form_data.total_reviews)
+                form.append('category_id', this.form_data.category_id)
+                for (let i = 0; i < this.image_file_list.length; i++) {
+                    form.append('image', this.image_file_list[i])
+                }
+
+                axios.post("{{ url_for('admin_page.admin_create_product_page')}}",form).then(res => {
+                    if (res.data.success) {
+                        // alert(res.data.message)
+                        window.location.href = "{{ url_for('admin_page.admin_create_product_page')}}"
+                    }else if(res.data.success == false){
+                        let keys = Object.keys(res.data)
+                        keys = keys.filter( key => key != "success")
+                        for (let i = 0; i < keys.length; i++) {
+                            this.errors[keys[i]] = res.data[keys[i]]
+                        }
+                        console.log(this.errors)
+                    }
+                })
+            }
+        },
+
+    }).mount('#app')
+</script>
+{% endblock %}

@@ -2,3 +2,4 @@
 app/static
 __pycache__
 .env
+.idea

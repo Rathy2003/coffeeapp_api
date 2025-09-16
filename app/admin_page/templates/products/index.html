@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+{% import "components/macro.html" as ui %}
+{% set active_page = "product" %}
+{% block content %}
+    <div id="app">
+        {#  Start Confirm Delete Modal  #}
+        <transition name="fade">
+            <delete-confirm-modal v-if="is_open_modal" @on-delete="onConfirmDelete"  @on-close-modal="onCloseModal"></delete-confirm-modal>
+        </transition>
+        {#  End Confirm Delete Modal  #}
+
+        <div class="flex items-center justify-between mb-8">
+            <h3 class="text-2xl font-bold text-gray-800">PRODUCT LISTING</h3>
+            <a href="{{ url_for('admin_page.admin_create_product_page') }}" class="px-4 py-2 bg-black hover:bg-gray-600 text-white rounded cursor-pointer">
+                NEW PRODUCT
+            </a>
+        </div>
+        <!-- Start Table -->
+        <div>
+            {% if search_query %}
+                <div class="mb-5">
+                    <h3 class="font-bold text-2xl">Search Result For : <q>{{ search_query }}</q></h3>
+                </div>
+            {% endif %}
+
+            {% if products.items|count > 0  %}
+                <table class="w-full">
+                    <thead>
+                        <tr class="bg-black text-white">
+                            <th class="border border-gray-500 px-2 py-3 text-center w-[70px]">#</th>
+                            <th class="border border-gray-500 px-2 py-3">IMAGE</th>
+                            <th class="border border-gray-500 px-2 py-3">NAME</th>
+                            <th class="border border-gray-500 px-2 py-3">DESCRIPTION</th>
+                            <th class="border border-gray-500 px-2 py-3">CATEGORY NAME</th>
+                            <th class="border border-gray-500 px-2 py-3 max-w-[80px]">ACTION</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for product in products.items %}
+                            <tr>
+                                <td class="border border-gray-500 px-2 py-3 text-center">{{ product.id }}</td>
+                                <td class="border border-gray-500 px-2 py-3">
+                                    <img class="mx-auto w-[80px] rounded aspect-square object-cover" src="/{{ product.images[0].image }}" />
+                                </td>
+                                <td class="border border-gray-500 px-2 py-3">{{ product.name }}</td>
+                                <td class="border border-gray-500 px-2 py-3"><p>{{ product.description | truncate(50) }}</p></td>
+                                 <td class="border border-gray-500 px-2 py-3 text-center">{{ product.category.name}}</td>
+                                <td class="border border-gray-500 px-2 py-3">
+                                    <div class="flex items-center justify-center gap-3">
+                                        <button @click='onDelete("{{ product.id }}")' class="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded cursor-pointer">DELETE</button>
+                                        <a href="{{ url_for('admin_page.admin_category_page_edit',category_id=product.id) }}" class="px-4 py-2 bg-black hover:bg-gray-600 text-white rounded cursor-pointer">EDIT</a>
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                <div class="flex items-center gap-3 justify-center mt-5">
+                    {# Start Previous Page Button #}
+                     <a href="?page={{ products.page - 1 if search_query != '' else 'q=' }}" class="flex items-center justify-center px-5 {{ "hover:bg-black hover:text-white" if products.has_prev else "cursor-not-allowed px-5 select-none" }} py-3 border rounded cursor-pointer min-w-[100px]">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
+                        </svg>
+                    </a>
+                    {# End Previous Page Button #}
+
+                    {% for x in range(products.pages) %}
+                        <a href="?page={{ loop.index if search_query != '' else 'q=' }}" class="block px-5 {{ "bg-black text-white" if loop.index == products.page else "" }} hover:bg-black hover:text-white py-3 border rounded cursor-pointer">{{ loop.index }}</a>
+                    {% endfor %}
+
+                    {# Start Next Page Button #}
+                   <a href="?page={{ products.page + 1 if search_query != '' else 'q=' }}" class="flex items-center justify-center px-5  {{ "cursor-pointer hover:bg-black hover:text-white" if products.page < products.pages else "cursor-not-allowed px-5 select-none" }} py-3 border rounded min-w-[100px]">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
+                        </svg>
+                    </a>
+                    {# End Next Page Button #}
+
+                </div>
+            {% else %}
+                {{ ui.notfound() }}
+            {% endif %}
+        </div>
+        <!-- End Table -->
+    </div>
+
+{% endblock %}
+
+
+{% block script %}
+
+<script src="{{ url_for("admin_page.static",filename="/js/delete-confirm-modal.js") }}"></script>
+
+<script>
+    const { createApp } = Vue
+    const app = createApp({
+        delimiters: ['[[', ']]'],
+        data() {
+            return {
+                is_open_modal: false,
+                temp_delete_id: null
+            }
+        },
+        methods: {
+            onDelete(id){
+                this.temp_delete_id = id;
+                this.is_open_modal = true
+            },
+            onCloseModal(){
+                this.temp_delete_id = null;
+                this.is_open_modal = false
+            },
+            onConfirmDelete(){
+                axios.post("{{ url_for('admin_page.admin_delete_product') }}",{id:this.temp_delete_id}).then( rp => {
+                    if(rp.data.success){
+                        this.onCloseModal()
+                        window.location.reload();
+                    }
+                })
+            }
+        },
+
+    })
+    app.component("delete-confirm-modal", DeleteConfirmModal)
+    app.mount('#app')
+</script>
+{% endblock %}

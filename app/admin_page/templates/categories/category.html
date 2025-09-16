@@ -1,0 +1,158 @@
+{% extends "base.html" %}
+
+{% set active_page = "category" %}
+{% import "components/macro.html" as ui %}
+
+{% block content %}
+    <div id="app">
+        {#  Start Confirm Delete Modal  #}
+        <transition name="fade">
+            <delete-confirm-modal v-if="is_open_modal" @on-delete="onConfirmDelete" @on-close-modal="onCloseModal"></delete-confirm-modal>
+        </transition>
+
+        <transition name="fade">
+            <feedback-message type="success" v-if="message != ''" :message="message" @close="message=''"></feedback-message>
+        </transition>
+        {#  End Confirm Delete Modal  #}
+        <div class="flex items-center justify-between">
+            <h3 class="text-2xl font-bold text-gray-800 mb-6">CATEGORY LISTING</h3>
+            <button class="px-4 py-2 bg-black hover:bg-gray-600 text-white rounded cursor-pointer">
+                NEW CATEGORY
+            </button>
+        </div>
+        <!-- Start Success Or Error Message -->
+        {% with messages = get_flashed_messages(category_filter=["success"]) %}
+            {% if messages %}
+                <div class="p-5 bg-green-500 rounded my-4 flex items-center justify-between">
+                    <div class="text-white flex gap-3">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                             stroke="currentColor" class="size-7">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                  d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/>
+                        </svg>
+                        <p>{{ messages[0] }}</p>
+                    </div>
+
+                    <button class="text-white cursor-pointer">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                             stroke="currentColor" class="size-6">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12"/>
+                        </svg>
+                    </button>
+                </div>
+            {% endif %}
+        {% endwith %}
+        <!-- End Success Or Error Message -->
+
+        <div class="flex gap-8">
+            <!-- Start Left Table -->
+            <div class="w-[65%]">
+                <table class="w-full">
+                    <thead>
+                    <tr class="bg-black text-white">
+                        <th class="border border-gray-500 px-2 py-3 text-center w-[50px]">#</th>
+                        <th class="border border-gray-500 px-2 py-3">NAME</th>
+                        <th class="border border-gray-500 px-2 py-3">TOTAL PRODUCT</th>
+                        <th class="border border-gray-500 px-2 py-3 max-w-[80px]">ACTION</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for category in categories %}
+                        <tr>
+                            <td class="border border-gray-500 px-2 py-3 text-center">{{ category.id }}</td>
+                            <td class="border border-gray-500 px-2 py-3">{{ category.name }}</td>
+                            <td class="border border-gray-500 px-2 py-3 text-center">{{ category.products|count }}</td>
+                            <td class="border border-gray-500 px-2 py-3 flex items-center justify-center gap-3 ">
+                                <button @click='onDelete("{{ category.id }}")'
+                                        class="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded cursor-pointer">
+                                    DELETE
+                                </button>
+                                <a href="{{ url_for('admin_page.admin_category_page_edit',category_id=category.id) }}"
+                                   class="px-4 py-2 bg-black hover:bg-gray-600 text-white rounded cursor-pointer">EDIT</a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <!-- End Left Table -->
+
+            <!-- Start Right Form -->
+            <div class="w-[45%]">
+                <h1 class="text-center text-2xl font-bold">CREATE NEW CATEGORY</h1>
+                <form action="{{ url_for('admin_page.admin_category_page') if not category else url_for('admin_page.admin_category_page_edit',category_id=category.id) }}"
+                      method="POST" class="flex flex-col gap-3 mt-4">
+                    <div class="mb-3">
+
+                        {% with errors = get_flashed_messages(category_filter=["name"]) %}
+                            <label for="categoryName" class="block mb-2">Category Name</label>
+                            <input type="text" name="name" value="{{ category.name if category else '' }}"
+                                   placeholder="Enter Category Name" id="categoryName"
+                                   class="border border-gray-500 {{ 'border-red-500' if errors else '' }} p-3 rounded w-full"
+                                   required>
+                            {% if errors %}
+                                <!-- Start Validation Message -->
+                                <div class="text-red-500 mt-2">
+                                    {{ errors[0] }}
+                                </div>
+                                <!-- End Validation Message -->
+                            {% endif %}
+                        {% endwith %}
+
+                    </div>
+                    <button type="submit"
+                            class="px-4 py-2 bg-black hover:bg-gray-600 text-white rounded cursor-pointer">
+                        {{ 'SAVE CHANGE' if category else 'CREATE CATEGORY' }}
+                    </button>
+                </form>
+            </div>
+            <!-- End Right Form -->
+        </div>
+    </div>
+
+{% endblock %}
+
+{% block script %}
+
+    <script src="{{ url_for("admin_page.static",filename="/js/delete-confirm-modal.js") }}"></script>
+    <script src="{{ url_for("admin_page.static",filename="/js/feedback-message.js") }}"></script>
+    <script>
+        const {createApp} = Vue
+        const app = createApp({
+            delimiters: ['[[', ']]'],
+            data() {
+                return {
+                    is_open_modal: false,
+                    temp_delete_id: null,
+                    message: "",
+                }
+            },
+            methods: {
+                onDelete(id) {
+                    this.temp_delete_id = id;
+                    this.is_open_modal = true
+                },
+                onCloseModal() {
+                    this.temp_delete_id = null;
+                    this.is_open_modal = false
+                },
+                onConfirmDelete() {
+                    axios.post("{{ url_for('admin_page.delete_category') }}", {id: this.temp_delete_id}).then(rp => {
+                        console.log(rp)
+                        if (rp.data.success) {
+                            this.onCloseModal()
+                            window.location.reload();
+                        } else if (!rp.data.success) {
+                            this.message = rp.data.message;
+                            this.onCloseModal();
+                        }
+                    })
+                }
+            },
+
+        })
+        app.component("delete-confirm-modal", DeleteConfirmModal)
+        app.component("feedback-message", FeedbackMessage)
+        app.mount('#app')
+    </script>
+{% endblock %}
