@@ -1,15 +1,16 @@
 {# templates/components/macro.html #}
 
 <!-- Start Input Field -->
-{% macro input_field(name,type="text",error="",value="",model="",placeholder="",label="",required=false) %}
+{% macro input_field(name,type="text",error="",value="",model="",step="1",placeholder="",label="",required=false) %}
     {% set border = "border-gray-500" %}
     {% if error|wordcount > 2 %}
         {% set border = "border-red-500" %}
     {% endif %}
     <div class="mb-3">
         <label for="{{ name }}" class="block mb-2">{{ label }}</label>
-        <input v-model="{{ model }}" type="{{ type }}" name="{{ name }}" placeholder="{{  placeholder }}"
-            id="{{ name }}" class="border {{ border }} p-3 rounded w-full" required="{{ required }}">
+        <input v-model="{{ model }}" type="{{ type }}" step="{{ step }}" name="{{ name }}" placeholder="{{  placeholder }}"
+        id="{{ name }}" class="border {{ border }} p-3 rounded w-full" required="{{ required }}">
+
         {% if error|wordcount > 2 %}
             <!-- Start Validation Message -->
             <div class="text-red-500 mt-2">

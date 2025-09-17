@@ -32,7 +32,7 @@
         <div class="flex gap-5">
             <div class="w-1/2">
                 {{ ui.input_field(name="username",error="[[errors.name]]",model="form_data.name",type="text",label="Product Name",required=true,placeholder="Enter Product Name") }}
-                {{ ui.input_field(name="price",model="form_data.price",type="number",label="Product Price",required=true,placeholder="Enter Product Price") }}
+                {{ ui.input_field(name="price",model="form_data.price",type="number",step="any",label="Product Price",required=true,placeholder="Enter Product Price") }}
                 {{ ui.select_field(name="category_id",placeholder="Select Product Category",model="form_data.category_id",label="Product Category",items=categories) }}
                 <div class="mb-3">
                     <label for="productDescription" class="block mb-2">Product Description</label>
