@@ -82,7 +82,7 @@
                 <!-- End Upload Images -->
 
                 {{ ui.input_field(name="Volume",model="form_data.volume",type="number",label="Product Volume",required=true,placeholder="Enter Product Volume") }}
-                {{ ui.input_field(name="rating",model="form_data.rating",type="number",label="Product Rating",required=true,placeholder="Enter Product Rating") }}
+                {{ ui.input_field(name="rating",model="form_data.rating",step="any",type="number",label="Product Rating",required=true,placeholder="Enter Product Rating") }}
                 {{ ui.input_field(name="total_reviews",model="form_data.total_reviews",type="number",label="Total Reviews",required=true,placeholder="Enter Total Reviews") }}
 
                 <hr>
